@@ -1,0 +1,59 @@
+---
+title: "BitSet vs. BitVector"
+output: 
+  pdf_document:
+    toc: true
+    toc_depth: 4
+  html_document: 
+    keep_md: yes
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    collapsed: false
+    theme: default
+---
+
+```{r, message=FALSE}
+library(tidyr)    # (Wickham & Henry, 2018)
+library(ggplot2)  # (Wickham, 2009)
+library(plyr)     # (Wickham, 2011)
+library(dplyr)    # (Wickham et al., 2018)
+library(cowplot)  # (Wilke, 2018)
+library(scales)
+```
+
+```{r, message=FALSE}
+data_loc <- "data/bitset-performance.csv"
+performance_data <- read.csv(data_loc, na.strings = "NONE")
+performance_data$operation <- factor(performance_data$operation, 
+                                      levels = c("CountOnes_Mixed",
+                                                  "NOT",
+                                                  "AND",
+                                                  "OR",
+                                                  "NAND",
+                                                  "NOR",
+                                                  "XOR",
+                                                  "EQU",
+                                                  "R_SHIFT_0.25l",
+                                                  "R_SHIFT_0.5l",
+                                                  "R_SHIFT_1l",
+                                                  "L_SHIFT_0.25l",
+                                                  "L_SHIFT_0.5l",
+                                                  "L_SHIFT_1l"))
+performance_data$bits <- factor(performance_data$bits, 
+                                      levels = c("16","31", "32","64","128","256","10000"))
+
+
+```
+
+```{r, message=FALSE}
+ggplot(data = filter(performance_data, compile_time_optimizations==1 & iterations==10000), aes(x=operation, y=time, color=treatment)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~bits, ncol=1) +
+  ylim(-1, NA) +
+  # scale_y_continuous(trans=scales::pseudo_log_trans()) +
+  scale_y_continuous(trans="log10") +
+  ggtitle("-O3 -DNDEBUG") +
+  ggsave("compile-opt.pdf", height=20, width=10)
+```
