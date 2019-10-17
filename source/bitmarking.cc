@@ -62,6 +62,7 @@ private:
     double time=0.0;
     size_t n=0;
     double value=0.0;
+    std::string container="";
   } info;
 
   emp::DataFile datafile;
@@ -76,10 +77,15 @@ private:
   emp::vector< std::tuple<emp::BitSet<256>,emp::BitSet<256>> > bit_set_256;
   emp::vector< std::tuple<emp::BitSet<10000>,emp::BitSet<10000>> > bit_set_10000;
 
+  const std::string container = "T";
+  const std::string container_vectorized = "emp::vector<T>";
 
-  // Test bitvectors
+
+  // Test bitvectors without vectorization
   template<size_t NUM_BITS>
   void BenchmarkBitVectors() {
+
+    info.container = container;
 
     // Resize all bit vectors
     const size_t width = NUM_BITS;
@@ -106,10 +112,10 @@ private:
       // ------------ CountOnes_Mixed ------------
       info.operation = "CountOnes_Mixed";
       auto start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-        size_t num_ones = std::get<0>(bit_vectors[i]).CountOnes_Mixed();
-        info.value = (double)num_ones;
-      }
+
+      size_t num_ones = std::get<0>(bit_vectors[0]).CountOnes_Mixed();
+      info.value = (double)num_ones;
+
       auto end_time = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -118,9 +124,9 @@ private:
       // ------------ NOT ------------
       info.operation = "NOT";
       start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).NOT();
-      }
+   
+      recipient = std::get<0>(bit_vectors[0]).NOT();
+
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -129,9 +135,9 @@ private:
       // ------------ AND ------------
       info.operation = "AND";
       start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).AND(std::get<1>(bit_vectors[i]));
-      }
+
+      recipient = std::get<0>(bit_vectors[0]).AND(std::get<1>(bit_vectors[0]));
+
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -140,115 +146,9 @@ private:
       // ------------ OR ------------
       info.operation = "OR";
       start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).OR(std::get<1>(bit_vectors[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
 
-      // ------------ NAND ------------
-      info.operation = "NAND";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).NAND(std::get<1>(bit_vectors[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
+      recipient = std::get<0>(bit_vectors[0]).OR(std::get<1>(bit_vectors[0]));
 
-
-      // ------------ NOR ------------
-      info.operation = "NOR";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).NOR(std::get<1>(bit_vectors[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ XOR ------------
-      info.operation = "XOR";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).XOR(std::get<1>(bit_vectors[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ EQU ------------
-      info.operation = "EQU";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).EQU(std::get<1>(bit_vectors[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ SHIFT ------------
-      info.operation = "R_SHIFT_0.25l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(width/4);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "R_SHIFT_0.5l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(width/2);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "R_SHIFT_1l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(width);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_0.25l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(-1*((int)width/4));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_0.5l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(-1*((int)width/2));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_1l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_vectors.size(); ++i) {
-         recipient = std::get<0>(bit_vectors[i]).SHIFT(-1*(int)width);
-      }
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -256,9 +156,11 @@ private:
     }
   }
 
-  // Test bit sets
+  // Test bit sets without vectorization
   template<size_t NUM_BITS>
   void BenchmarkBitSets(emp::vector< std::tuple<emp::BitSet<NUM_BITS>,emp::BitSet<NUM_BITS>> > & bit_sets) {
+
+    info.container = container;
 
     // Resize all bit vectors
     const size_t width = NUM_BITS;
@@ -280,10 +182,10 @@ private:
       // ------------ CountOnes_Mixed ------------
       info.operation = "CountOnes_Mixed";
       auto start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-        size_t num_ones = std::get<0>(bit_sets[i]).CountOnes_Mixed();
-        info.value = (double)num_ones;
-      }
+
+      size_t num_ones = std::get<0>(bit_sets[0]).CountOnes_Mixed();
+      info.value = (double)num_ones;      
+
       auto end_time = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -292,6 +194,161 @@ private:
       // ------------ NOT ------------
       info.operation = "NOT";
       start_time = std::chrono::high_resolution_clock::now();
+
+      recipient = std::get<0>(bit_sets[0]).NOT();
+
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ AND ------------
+      info.operation = "AND";
+      start_time = std::chrono::high_resolution_clock::now();
+
+      recipient = std::get<0>(bit_sets[0]).AND(std::get<1>(bit_sets[0]));
+
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ OR ------------
+      info.operation = "OR";
+      start_time = std::chrono::high_resolution_clock::now();
+
+      recipient = std::get<0>(bit_sets[0]).OR(std::get<1>(bit_sets[0]));
+
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+    }
+  }
+  // Test bitvectors with vectorization
+  template<size_t NUM_BITS>
+  void BenchmarkBitVectors_vectorized() {
+
+    info.container = container_vectorized;
+
+    // Resize all bit vectors
+    const size_t width = NUM_BITS;
+    info.bits = width;
+    for (size_t i = 0; i < NUM_ITERATIONS; ++i) {
+      std::get<0>(bit_vectors[i]).Resize(width);
+      std::get<1>(bit_vectors[i]).Resize(width);
+    }
+
+    // Compute timings for each replicate.
+    for (size_t rep = 0; rep < num_replicates; ++rep) {
+      info.replicate = rep;
+      // Do bit vector:
+      info.treatment = "bit_vector";
+      // (1) Randomize bit_vectors
+      for (size_t i = 0; i < num_iterations; ++i) {
+        emp::RandomizeBitVector(std::get<0>(bit_vectors[i]), random);
+        emp::RandomizeBitVector(std::get<1>(bit_vectors[i]), random);
+      }
+      emp::BitVector recipient;
+
+      // (2) Time each operation!
+
+      // ------------ CountOnes_Mixed ------------
+      info.operation = "CountOnes_Mixed";
+      auto start_time = std::chrono::high_resolution_clock::now();
+
+      for (size_t i = 0; i < bit_vectors.size(); ++i) {
+        size_t num_ones = std::get<0>(bit_vectors[i]).CountOnes_Mixed();
+        info.value = (double)num_ones;
+      }
+
+      auto end_time = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ NOT ------------
+      info.operation = "NOT";
+      start_time = std::chrono::high_resolution_clock::now();
+
+      for (size_t i = 0; i < bit_vectors.size(); ++i) {
+         recipient = std::get<0>(bit_vectors[i]).NOT();
+      }
+
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ AND ------------
+      info.operation = "AND";
+      start_time = std::chrono::high_resolution_clock::now();
+   
+      for (size_t i = 0; i < bit_vectors.size(); ++i) {
+         recipient = std::get<0>(bit_vectors[i]).AND(std::get<1>(bit_vectors[i]));
+      }
+
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ OR ------------
+      info.operation = "OR";
+      start_time = std::chrono::high_resolution_clock::now();
+      
+      for (size_t i = 0; i < bit_vectors.size(); ++i) {
+         recipient = std::get<0>(bit_vectors[i]).OR(std::get<1>(bit_vectors[i]));
+      }
+    info.container = container_vectorized;
+      end_time = std::chrono::high_resolution_clock::now();
+      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+    }
+  }
+
+  // Test bit sets with vectorization
+  template<size_t NUM_BITS>
+  void BenchmarkBitSets_vectorized(emp::vector< std::tuple<emp::BitSet<NUM_BITS>,emp::BitSet<NUM_BITS>> > & bit_sets) {
+    
+    info.container = container_vectorized;
+    
+    // Resize all bit vectors
+    const size_t width = NUM_BITS;
+    info.bits = width;
+
+    // Compute timings for each replicate.
+    for (size_t rep = 0; rep < num_replicates; ++rep) {
+      info.replicate = rep;
+      // Do bit set:
+      info.treatment = "bit_set";
+      // (1) Randomize bit_sets
+      for (size_t i = 0; i < num_iterations; ++i) {
+        std::get<0>(bit_sets[i]).Randomize(random);
+        std::get<1>(bit_sets[i]).Randomize(random);
+      }
+      emp::BitSet<NUM_BITS> recipient;
+
+      // (2) Time each operation!
+      // ------------ CountOnes_Mixed ------------
+      info.operation = "CountOnes_Mixed";
+      auto start_time = std::chrono::high_resolution_clock::now();
+
+      for (size_t i = 0; i < bit_sets.size(); ++i) {
+        size_t num_ones = std::get<0>(bit_sets[i]).CountOnes_Mixed();
+        info.value = (double)num_ones;
+      }
+
+      auto end_time = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
+      info.time = duration;
+      datafile.Update();
+
+      // ------------ NOT ------------
+      info.operation = "NOT";
+      start_time = std::chrono::high_resolution_clock::now();
+
       for (size_t i = 0; i < bit_sets.size(); ++i) {
          recipient = std::get<0>(bit_sets[i]).NOT();
       }
@@ -303,9 +360,11 @@ private:
       // ------------ AND ------------
       info.operation = "AND";
       start_time = std::chrono::high_resolution_clock::now();
+
       for (size_t i = 0; i < bit_sets.size(); ++i) {
          recipient = std::get<0>(bit_sets[i]).AND(std::get<1>(bit_sets[i]));
       }
+
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
@@ -314,122 +373,17 @@ private:
       // ------------ OR ------------
       info.operation = "OR";
       start_time = std::chrono::high_resolution_clock::now();
+
       for (size_t i = 0; i < bit_sets.size(); ++i) {
          recipient = std::get<0>(bit_sets[i]).OR(std::get<1>(bit_sets[i]));
       }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
 
-      // ------------ NAND ------------
-      info.operation = "NAND";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).NAND(std::get<1>(bit_sets[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-
-      // ------------ NOR ------------
-      info.operation = "NOR";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).NOR(std::get<1>(bit_sets[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ XOR ------------
-      info.operation = "XOR";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).XOR(std::get<1>(bit_sets[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ EQU ------------
-      info.operation = "EQU";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).EQU(std::get<1>(bit_sets[i]));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ SHIFT ------------
-      info.operation = "R_SHIFT_0.25l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(width/4);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "R_SHIFT_0.5l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(width/2);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "R_SHIFT_1l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(width);
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_0.25l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(-1*((int)width/4));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_0.5l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(-1*((int)width/2));
-      }
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      info.operation = "L_SHIFT_1l";
-      start_time = std::chrono::high_resolution_clock::now();
-      for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).SHIFT(-1*(int)width);
-      }
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
       info.time = duration;
       datafile.Update();
     }
   }
-
 public:
   Benchmark(size_t seed, size_t n_iterations, size_t n_replicates)
     : num_iterations(n_iterations), num_replicates(n_replicates),
@@ -468,23 +422,17 @@ public:
     #else
       datafile.AddFun<bool>([this]() { return false; }, "compile_time_optimizations");
     #endif
-
+    datafile.AddFun<std::string>([this]() { return info.container; }, "container");
 
     datafile.PrintHeaderKeys();
   }
 
   void Run() {
-    BenchmarkBitVectors<31>();
-    BenchmarkBitSets<31>(bit_set_31);
-
-    BenchmarkBitVectors<16>();
-    BenchmarkBitSets<16>(bit_set_16);
-
-    BenchmarkBitVectors<32>();
-    BenchmarkBitSets<32>(bit_set_32);
-
     BenchmarkBitVectors<64>();
     BenchmarkBitSets<64>(bit_set_64);
+
+    BenchmarkBitVectors_vectorized<64>();
+    BenchmarkBitSets_vectorized<64>(bit_set_64);
 
     // BenchmarkBitVectors<128>();
     // BenchmarkBitSets<128>(bit_set_128);
