@@ -1,0 +1,7 @@
+{'naked': {'bitset': 22.02, 'bitvector': 156.88}, 'vector': {'bitset': 22.26, 'bitvector': 134409.08}}
+bitset/bitvector relative time
+'T'        : bitvector takes 7.12x longer
+'vector<t>': bitvector takes 6038.14x longer
+
+bitvector speedup
+it is 856.76x slower to use a vector of bitvectors
