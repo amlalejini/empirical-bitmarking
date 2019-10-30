@@ -4,6 +4,7 @@
 #include <tuple>
 #include <map>
 
+
 #include "base/vector.h"
 
 #include "tools/BitSet.h"
@@ -16,34 +17,9 @@
 
 #include <thread>
 
-// Replicates - 100
-
-// Tests - Sizes
-// - 16 Bit
-// - 32 Bit
-// - 64 Bit
-// - 128 Bit
-// - 256 Bit
-
-// Tests - Logic operations
-// - ==
-// - <
-// - >
-// - GetUInt
-// - CountOnes_Mixed
-// - NOT
-// - AND
-// - OR
-// - NAND
-// - AND
-// - NOR
-// - XOR
-// - EQU
-// - SHIFT
-
 size_t SEED = 2;
-size_t NUM_REPLICATES = 50;    // How many replicates should we do?
-size_t NUM_ITERATIONS = 10000;  // How many times to repeat each operation before measuring time elapsed?
+size_t NUM_REPLICATES = 100;    // How many replicates should we do?
+size_t NUM_ITERATIONS = 100;  // How many times to repeat each operation before measuring time elapsed?
 
 
 class Benchmark {
@@ -69,162 +45,12 @@ private:
   emp::Random random;
 
   emp::vector< std::tuple<emp::BitVector,emp::BitVector> > bit_vectors;
-  emp::vector< std::tuple<emp::BitSet<16>,emp::BitSet<16>> > bit_set_16;
-  emp::vector< std::tuple<emp::BitSet<31>,emp::BitSet<31>> > bit_set_31;
-  emp::vector< std::tuple<emp::BitSet<32>,emp::BitSet<32>> > bit_set_32;
   emp::vector< std::tuple<emp::BitSet<64>,emp::BitSet<64>> > bit_set_64;
-  emp::vector< std::tuple<emp::BitSet<128>,emp::BitSet<128>> > bit_set_128;
-  emp::vector< std::tuple<emp::BitSet<256>,emp::BitSet<256>> > bit_set_256;
-  emp::vector< std::tuple<emp::BitSet<10000>,emp::BitSet<10000>> > bit_set_10000;
 
   const std::string container = "T";
   const std::string container_vectorized = "emp::vector<T>";
 
 
-  // Test bitvectors without vectorization
-  template<size_t NUM_BITS>
-  void BenchmarkBitVectors() {
-
-    info.container = container;
-
-    // Resize all bit vectors
-    const size_t width = NUM_BITS;
-    info.bits = width;
-    for (size_t i = 0; i < NUM_ITERATIONS; ++i) {
-      std::get<0>(bit_vectors[i]).Resize(width);
-      std::get<1>(bit_vectors[i]).Resize(width);
-    }
-
-    // Compute timings for each replicate.
-    for (size_t rep = 0; rep < num_replicates; ++rep) {
-      info.replicate = rep;
-      // Do bit vector:
-      info.treatment = "bit_vector";
-      // (1) Randomize bit_vectors
-      for (size_t i = 0; i < num_iterations; ++i) {
-        emp::RandomizeBitVector(std::get<0>(bit_vectors[i]), random);
-        emp::RandomizeBitVector(std::get<1>(bit_vectors[i]), random);
-      }
-      emp::BitVector recipient;
-
-      // (2) Time each operation!
-
-      // ------------ CountOnes_Mixed ------------
-      info.operation = "CountOnes_Mixed";
-      auto start_time = std::chrono::high_resolution_clock::now();
-
-      size_t num_ones = std::get<0>(bit_vectors[0]).CountOnes_Mixed();
-      info.value = (double)num_ones;
-
-      auto end_time = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ NOT ------------
-      info.operation = "NOT";
-      start_time = std::chrono::high_resolution_clock::now();
-   
-      recipient = std::get<0>(bit_vectors[0]).NOT();
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ AND ------------
-      info.operation = "AND";
-      start_time = std::chrono::high_resolution_clock::now();
-
-      recipient = std::get<0>(bit_vectors[0]).AND(std::get<1>(bit_vectors[0]));
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ OR ------------
-      info.operation = "OR";
-      start_time = std::chrono::high_resolution_clock::now();
-
-      recipient = std::get<0>(bit_vectors[0]).OR(std::get<1>(bit_vectors[0]));
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-    }
-  }
-
-  // Test bit sets without vectorization
-  template<size_t NUM_BITS>
-  void BenchmarkBitSets(emp::vector< std::tuple<emp::BitSet<NUM_BITS>,emp::BitSet<NUM_BITS>> > & bit_sets) {
-
-    info.container = container;
-
-    // Resize all bit vectors
-    const size_t width = NUM_BITS;
-    info.bits = width;
-
-    // Compute timings for each replicate.
-    for (size_t rep = 0; rep < num_replicates; ++rep) {
-      info.replicate = rep;
-      // Do bit set:
-      info.treatment = "bit_set";
-      // (1) Randomize bit_sets
-      for (size_t i = 0; i < num_iterations; ++i) {
-        std::get<0>(bit_sets[i]).Randomize(random);
-        std::get<1>(bit_sets[i]).Randomize(random);
-      }
-      emp::BitSet<NUM_BITS> recipient;
-
-      // (2) Time each operation!
-      // ------------ CountOnes_Mixed ------------
-      info.operation = "CountOnes_Mixed";
-      auto start_time = std::chrono::high_resolution_clock::now();
-
-      size_t num_ones = std::get<0>(bit_sets[0]).CountOnes_Mixed();
-      info.value = (double)num_ones;      
-
-      auto end_time = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ NOT ------------
-      info.operation = "NOT";
-      start_time = std::chrono::high_resolution_clock::now();
-
-      recipient = std::get<0>(bit_sets[0]).NOT();
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ AND ------------
-      info.operation = "AND";
-      start_time = std::chrono::high_resolution_clock::now();
-
-      recipient = std::get<0>(bit_sets[0]).AND(std::get<1>(bit_sets[0]));
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-
-      // ------------ OR ------------
-      info.operation = "OR";
-      start_time = std::chrono::high_resolution_clock::now();
-
-      recipient = std::get<0>(bit_sets[0]).OR(std::get<1>(bit_sets[0]));
-
-      end_time = std::chrono::high_resolution_clock::now();
-      duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
-      info.time = duration;
-      datafile.Update();
-    }
-  }
   // Test bitvectors with vectorization
   template<size_t NUM_BITS>
   void BenchmarkBitVectors_vectorized() {
@@ -248,6 +74,7 @@ private:
       for (size_t i = 0; i < num_iterations; ++i) {
         emp::RandomizeBitVector(std::get<0>(bit_vectors[i]), random);
         emp::RandomizeBitVector(std::get<1>(bit_vectors[i]), random);
+        std::cout << std::get<0>(bit_vectors[i]) << std::get<1>(bit_vectors[i]) << std::endl;
       }
       emp::BitVector recipient;
 
@@ -259,7 +86,6 @@ private:
 
       for (size_t i = 0; i < bit_vectors.size(); ++i) {
         size_t num_ones = std::get<0>(bit_vectors[i]).CountOnes_Mixed();
-        info.value = (double)num_ones;
       }
 
       auto end_time = std::chrono::high_resolution_clock::now();
@@ -307,7 +133,6 @@ private:
       datafile.Update();
     }
   }
-
   // Test bit sets with vectorization
   template<size_t NUM_BITS>
   void BenchmarkBitSets_vectorized(emp::vector< std::tuple<emp::BitSet<NUM_BITS>,emp::BitSet<NUM_BITS>> > & bit_sets) {
@@ -327,6 +152,7 @@ private:
       for (size_t i = 0; i < num_iterations; ++i) {
         std::get<0>(bit_sets[i]).Randomize(random);
         std::get<1>(bit_sets[i]).Randomize(random);
+        std::cout << std::get<0>(bit_sets[i]) << std::get<1>(bit_sets[i]) << std::endl;
       }
       emp::BitSet<NUM_BITS> recipient;
 
@@ -337,7 +163,6 @@ private:
 
       for (size_t i = 0; i < bit_sets.size(); ++i) {
         size_t num_ones = std::get<0>(bit_sets[i]).CountOnes_Mixed();
-        info.value = (double)num_ones;
       }
 
       auto end_time = std::chrono::high_resolution_clock::now();
@@ -350,7 +175,7 @@ private:
       start_time = std::chrono::high_resolution_clock::now();
 
       for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).NOT();
+        recipient = std::get<0>(bit_sets[i]).NOT();
       }
       end_time = std::chrono::high_resolution_clock::now();
       duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
@@ -362,7 +187,8 @@ private:
       start_time = std::chrono::high_resolution_clock::now();
 
       for (size_t i = 0; i < bit_sets.size(); ++i) {
-         recipient = std::get<0>(bit_sets[i]).AND(std::get<1>(bit_sets[i]));
+        recipient = std::get<0>(bit_sets[i]).AND(std::get<1>(bit_sets[i]));
+
       }
 
       end_time = std::chrono::high_resolution_clock::now();
@@ -394,13 +220,7 @@ public:
       #endif
       random(seed),
       bit_vectors(NUM_ITERATIONS),
-      bit_set_16(NUM_ITERATIONS),
-      bit_set_31(NUM_ITERATIONS),
-      bit_set_32(NUM_ITERATIONS),
-      bit_set_64(NUM_ITERATIONS),
-      bit_set_128(NUM_ITERATIONS),
-      bit_set_256(NUM_ITERATIONS),
-      bit_set_10000(NUM_ITERATIONS)
+      bit_set_64(NUM_ITERATIONS)
   {
     info.n = NUM_ITERATIONS;
 
@@ -428,22 +248,10 @@ public:
   }
 
   void Run() {
-    BenchmarkBitVectors<64>();
-    BenchmarkBitSets<64>(bit_set_64);
-
     BenchmarkBitVectors_vectorized<64>();
     BenchmarkBitSets_vectorized<64>(bit_set_64);
 
-    // BenchmarkBitVectors<128>();
-    // BenchmarkBitSets<128>(bit_set_128);
-
-    // BenchmarkBitVectors<256>();
-    // BenchmarkBitSets<256>(bit_set_256);
-
-    // BenchmarkBitVectors<10000>();
-    // BenchmarkBitSets<10000>(bit_set_10000);
   }
-
 };
 
 int main() {
